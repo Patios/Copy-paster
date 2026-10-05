@@ -9,7 +9,7 @@
       content="Save terminal commands and copy them to the clipboard in one click."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=2" />
   </head>
   <body>
     <div class="page">
@@ -18,7 +18,7 @@
           <span class="mark" aria-hidden="true">&gt;_</span>
           <div>
             <h1>Copy Paster</h1>
-            <p>Save a terminal command, then copy it whenever you need it.</p>
+            <p>Save a terminal command once, then copy it on any computer.</p>
           </div>
         </div>
         <div class="mast-actions">
@@ -29,6 +29,51 @@
           </label>
         </div>
       </header>
+
+      <section class="panel sync" id="sync-panel" aria-labelledby="sync-title">
+        <div class="sync-top">
+          <div>
+            <h2 id="sync-title">Shared across computers</h2>
+            <p id="sync-status" class="hint">
+              Commands are stored in this GitHub repo. Another computer sees them when you open or refresh this page.
+              Paste a token here to save.
+            </p>
+            <p class="hint warning">Saved commands are public in Patios/Copy-paster. Don't store secrets.</p>
+          </div>
+          <button type="button" class="btn ghost" id="refresh-btn">Refresh</button>
+        </div>
+        <form id="token-form" class="token-form">
+          <label class="field" id="token-field">
+            <span>GitHub token</span>
+            <input
+              id="token-input"
+              type="password"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+              placeholder="github_pat_… or ghp_…"
+            />
+          </label>
+          <div class="form-row">
+            <button type="submit" class="btn primary" id="token-save">Save token</button>
+            <a
+              class="text-link"
+              id="token-link"
+              href="https://github.com/settings/personal-access-tokens/new"
+              target="_blank"
+              rel="noreferrer"
+              >Create a token</a
+            >
+            <button type="button" class="btn ghost" id="forget-token" hidden>Forget token</button>
+          </div>
+          <ol class="steps" id="token-steps">
+            <li>Create a fine-grained token for the repository <strong>Patios/Copy-paster</strong>.</li>
+            <li>Set <strong>Contents</strong> to <strong>Read and write</strong>.</li>
+            <li>Paste it above on each computer you want to save from. Viewing needs no token.</li>
+          </ol>
+        </form>
+      </section>
 
       <section class="panel composer" aria-labelledby="composer-title">
         <h2 id="composer-title">Save a command</h2>
@@ -68,7 +113,7 @@
           </label>
           <div class="form-row">
             <button type="submit" class="btn primary">Save command</button>
-            <p class="hint">Commands stay in this browser. Export a file if you want a backup.</p>
+            <p class="hint">Publishes the command to GitHub. Refresh this page on another computer to see it.</p>
           </div>
         </form>
       </section>
@@ -89,6 +134,6 @@
     </div>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
+    <script src="app.js?v=2"></script>
   </body>
 </html>

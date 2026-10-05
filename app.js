@@ -1,4 +1,13 @@
+const REPO = "Patios/Copy-paster";
+const BRANCH = "main";
+const FILE_PATH = "commands.json";
+const CONTENTS_URL = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 const STORAGE_KEY = "copy-paster.commands.v1";
+const TOKEN_KEY = "copy-paster.github-token";
+const SYNCED_KEY = "copy-paster.synced";
+const SETUP_TEXT =
+  "Commands are stored in this GitHub repo. Another computer sees them when you open or refresh this page. Paste a token here to save.";
+const CONNECTED_TEXT = "Connected. A save here shows up on your other computers after a refresh.";
 
 const addForm = document.querySelector("#add-form");
 const nameInput = document.querySelector("#name-input");
@@ -11,18 +20,29 @@ const countEl = document.querySelector("#count");
 const statusEl = document.querySelector("#status");
 const exportBtn = document.querySelector("#export-btn");
 const importInput = document.querySelector("#import-input");
+const syncStatus = document.querySelector("#sync-status");
+const tokenForm = document.querySelector("#token-form");
+const tokenField = document.querySelector("#token-field");
+const tokenInput = document.querySelector("#token-input");
+const tokenSave = document.querySelector("#token-save");
+const tokenLink = document.querySelector("#token-link");
+const tokenSteps = document.querySelector("#token-steps");
+const forgetTokenBtn = document.querySelector("#forget-token");
+const refreshBtn = document.querySelector("#refresh-btn");
+const saveButton = addForm.querySelector("button[type='submit']");
 
-let commands = load();
+let commands = loadCache();
+let fileSha = null;
 let query = "";
 let editingId = null;
 let pendingDeleteId = null;
+let publishing = false;
 let statusTimer = 0;
 
-function load() {
+function loadCache() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isCommand);
+    return normalize(parsed);
   } catch {
     return [];
   }
@@ -32,8 +52,23 @@ function persist() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(commands));
 }
 
+function getToken() {
+  return (localStorage.getItem(TOKEN_KEY) || "").trim();
+}
+
 function isCommand(item) {
   return item && typeof item.id === "string" && typeof item.command === "string";
+}
+
+function normalize(parsed) {
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(isCommand).map((item) => ({
+    id: item.id,
+    name: typeof item.name === "string" ? item.name : "",
+    command: item.command,
+    note: typeof item.note === "string" ? item.note : "",
+    updatedAt: typeof item.updatedAt === "number" ? item.updatedAt : Date.now(),
+  }));
 }
 
 function uid() {
@@ -46,29 +81,200 @@ function titleFromCommand(command) {
   return line.trim().slice(0, 80);
 }
 
+function encodeBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function decodeBase64(content) {
+  const binary = atob(String(content || "").replace(/\s/g, ""));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function authHeaders() {
+  const headers = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("error", isError);
   statusEl.classList.add("show");
   window.clearTimeout(statusTimer);
-  statusTimer = window.setTimeout(() => statusEl.classList.remove("show"), 1800);
+  statusTimer = window.setTimeout(() => statusEl.classList.remove("show"), isError ? 4200 : 2200);
 }
 
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.left = "-9999px";
-    document.body.append(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    if (!ok) throw new Error("copy failed");
+function updateTokenUI() {
+  const connected = Boolean(getToken());
+  tokenField.hidden = connected;
+  tokenSave.hidden = connected;
+  tokenLink.hidden = connected;
+  tokenSteps.hidden = connected;
+  forgetTokenBtn.hidden = !connected;
+  if (!connected) syncStatus.textContent = SETUP_TEXT;
+}
+
+async function fetchRemote() {
+  const response = await fetch(`${CONTENTS_URL}?ref=${BRANCH}&t=${Date.now()}`, {
+    headers: authHeaders(),
+    cache: "no-store",
+  });
+  if (response.status === 404) return { commands: [], sha: null };
+  if (!response.ok) {
+    const error = new Error("load failed");
+    error.status = response.status;
+    throw error;
   }
+  const data = await response.json();
+  let parsed = [];
+  try {
+    parsed = JSON.parse(decodeBase64(data.content));
+  } catch {
+    const error = new Error("invalid json");
+    error.status = 422;
+    throw error;
+  }
+  return { commands: normalize(parsed), sha: data.sha || null };
+}
+
+async function refreshFromGitHub({ silent } = {}) {
+  if (editingId || publishing) {
+    if (!silent) showStatus("Finish editing before refreshing.", true);
+    return false;
+  }
+
+  syncStatus.textContent = "Loading shared commands…";
+  try {
+    const remote = await fetchRemote();
+    fileSha = remote.sha;
+    const firstSync = localStorage.getItem(SYNCED_KEY) !== "1";
+    if (firstSync) {
+      const seen = new Set(remote.commands.map((item) => item.command));
+      const extra = commands.filter((item) => item.command && !seen.has(item.command));
+      if (extra.length && getToken()) {
+        const published = await push([...extra, ...remote.commands], "Publish commands saved in this browser", {
+          success: "Published commands from this browser.",
+        });
+        if (published) localStorage.setItem(SYNCED_KEY, "1");
+        return published;
+      }
+      if (extra.length) {
+        commands = [...extra, ...remote.commands];
+        persist();
+        render();
+        syncStatus.textContent = SETUP_TEXT;
+        return true;
+      }
+    }
+
+    commands = remote.commands;
+    localStorage.setItem(SYNCED_KEY, "1");
+    persist();
+    render();
+    syncStatus.textContent = getToken() ? CONNECTED_TEXT : SETUP_TEXT;
+    if (!silent) showStatus("Loaded the shared list");
+    return true;
+  } catch {
+    syncStatus.textContent = getToken() ? "Could not load the shared list." : SETUP_TEXT;
+    showStatus("Could not load commands from GitHub.", true);
+    render();
+    return false;
+  }
+}
+
+async function push(next, message, options = {}) {
+  const token = getToken();
+  if (!token) {
+    showStatus("Add a GitHub token to share this list with your other computers.", true);
+    tokenInput.focus();
+    return false;
+  }
+  if (publishing) return false;
+
+  publishing = true;
+  saveButton.disabled = true;
+  try {
+    if (!fileSha) {
+      const remote = await fetchRemote();
+      fileSha = remote.sha;
+    }
+
+    const body = {
+      message,
+      content: encodeBase64(`${JSON.stringify(next, null, 2)}\n`),
+      branch: BRANCH,
+    };
+    if (fileSha) body.sha = fileSha;
+
+    const response = await fetch(CONTENTS_URL, {
+      method: "PUT",
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.status === 409 || response.status === 422) {
+      const remote = await fetchRemote().catch(() => null);
+      if (remote) fileSha = remote.sha;
+      showStatus("The list changed on GitHub. Refresh, then try again.", true);
+      return false;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      showStatus("GitHub rejected the token. It needs Contents read and write on Patios/Copy-paster.", true);
+      return false;
+    }
+
+    if (!response.ok) {
+      showStatus("Could not publish the list to GitHub.", true);
+      return false;
+    }
+
+    const data = await response.json();
+    fileSha = data.content && data.content.sha ? data.content.sha : fileSha;
+    commands = next;
+    localStorage.setItem(SYNCED_KEY, "1");
+    persist();
+    render();
+    syncStatus.textContent = CONNECTED_TEXT;
+    showStatus(options.success || "Saved. Refresh this page on your other computer.");
+    return true;
+  } catch {
+    showStatus("Could not reach GitHub.", true);
+    return false;
+  } finally {
+    publishing = false;
+    saveButton.disabled = false;
+  }
+}
+
+async function tokenCanWrite(token) {
+  const response = await fetch(`https://api.github.com/repos/${REPO}`, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (response.status === 401) return { ok: false, reason: "GitHub rejected that token." };
+  if (!response.ok) return { ok: false, reason: "Could not check that token with GitHub." };
+  const repo = await response.json();
+  if (!repo.permissions || !repo.permissions.push) {
+    return { ok: false, reason: "That token cannot edit this repo. Set Contents to Read and write." };
+  }
+  return { ok: true };
 }
 
 function matches(command) {
@@ -86,7 +292,7 @@ function render() {
     emptyEl.hidden = false;
     emptyEl.textContent = commands.length
       ? "No commands match that search."
-      : "No commands yet. Save one above and it will stay in this browser.";
+      : "No shared commands yet. Save one and it will show up on your other computers.";
     return;
   }
 
@@ -97,13 +303,7 @@ function render() {
     const item = document.createElement("li");
     item.className = "card";
     item.dataset.id = command.id;
-
-    if (editingId === command.id) {
-      item.append(renderEditor(command));
-    } else {
-      item.append(renderCard(command));
-    }
-
+    item.append(editingId === command.id ? renderEditor(command) : renderCard(command));
     fragment.append(item);
   }
 
@@ -148,7 +348,6 @@ function renderCard(command) {
   const code = document.createElement("code");
   code.textContent = command.command;
   pre.append(code);
-
   wrap.append(top, pre);
   return wrap;
 }
@@ -172,20 +371,30 @@ function renderEditor(command) {
   });
   cancel.type = "button";
   row.append(save, cancel);
-
   form.append(name, cmd, note, row);
-  form.addEventListener("submit", (event) => {
+
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const nextCommand = cmd.querySelector("textarea").value.trim();
     if (!nextCommand) return;
-    command.name = name.querySelector("input").value.trim();
-    command.command = nextCommand;
-    command.note = note.querySelector("input").value.trim();
-    command.updatedAt = Date.now();
+    const next = commands.map((item) =>
+      item.id === command.id
+        ? {
+            ...item,
+            name: name.querySelector("input").value.trim(),
+            command: nextCommand,
+            note: note.querySelector("input").value.trim(),
+            updatedAt: Date.now(),
+          }
+        : item
+    );
+    const previousEditing = editingId;
     editingId = null;
-    persist();
-    render();
-    showStatus("Command updated");
+    const ok = await push(next, "Update a saved command", { success: "Command updated" });
+    if (!ok) {
+      editingId = previousEditing;
+      render();
+    }
   });
 
   return form;
@@ -197,7 +406,6 @@ function labeledInput(label, type, value) {
   const span = document.createElement("span");
   span.textContent = label;
   field.append(span);
-
   const control = document.createElement(type === "textarea" ? "textarea" : "input");
   if (type !== "textarea") control.type = type;
   control.value = value;
@@ -227,39 +435,60 @@ async function onCopy(command) {
   }
 }
 
-function onDelete(id) {
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.left = "-9999px";
+    document.body.append(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    if (!ok) throw new Error("copy failed");
+  }
+}
+
+async function onDelete(id) {
   if (pendingDeleteId !== id) {
     pendingDeleteId = id;
     render();
     return;
   }
 
-  commands = commands.filter((command) => command.id !== id);
+  const next = commands.filter((command) => command.id !== id);
+  const previousPending = pendingDeleteId;
   pendingDeleteId = null;
-  if (editingId === id) editingId = null;
-  persist();
-  render();
-  showStatus("Command deleted");
+  const ok = await push(next, "Delete a saved command", { success: "Command deleted" });
+  if (!ok) {
+    pendingDeleteId = previousPending;
+    render();
+  }
 }
 
-addForm.addEventListener("submit", (event) => {
+addForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const command = commandInput.value.trim();
   if (!command) return;
 
-  commands.unshift({
-    id: uid(),
-    name: nameInput.value.trim(),
-    command,
-    note: noteInput.value.trim(),
-    updatedAt: Date.now(),
-  });
-  persist();
+  const next = [
+    {
+      id: uid(),
+      name: nameInput.value.trim(),
+      command,
+      note: noteInput.value.trim(),
+      updatedAt: Date.now(),
+    },
+    ...commands,
+  ];
+  const ok = await push(next, "Save a terminal command");
+  if (!ok) return;
   addForm.reset();
   query = "";
   searchInput.value = "";
-  render();
-  showStatus("Command saved");
   nameInput.focus();
 });
 
@@ -287,16 +516,17 @@ importInput.addEventListener("change", async () => {
 
   try {
     const parsed = JSON.parse(await file.text());
-    if (!Array.isArray(parsed)) throw new Error("expected array");
-    const incoming = parsed
-      .map((item) => ({
-        id: typeof item.id === "string" ? item.id : uid(),
-        name: typeof item.name === "string" ? item.name.trim() : "",
-        command: typeof item.command === "string" ? item.command.trim() : "",
-        note: typeof item.note === "string" ? item.note.trim() : "",
-        updatedAt: Date.now(),
-      }))
-      .filter((item) => item.command);
+    const incoming = normalize(
+      Array.isArray(parsed)
+        ? parsed.map((item) => ({
+            ...item,
+            id: typeof item.id === "string" ? item.id : uid(),
+            command: typeof item.command === "string" ? item.command.trim() : "",
+            name: typeof item.name === "string" ? item.name.trim() : "",
+            note: typeof item.note === "string" ? item.note.trim() : "",
+          }))
+        : []
+    ).filter((item) => item.command);
 
     if (!incoming.length) throw new Error("empty");
 
@@ -307,13 +537,57 @@ importInput.addEventListener("change", async () => {
       return true;
     });
 
-    commands = [...fresh, ...commands];
-    persist();
-    render();
-    showStatus(fresh.length ? `Imported ${fresh.length}` : "Those commands are already saved");
+    if (!fresh.length) {
+      showStatus("Those commands are already saved");
+      return;
+    }
+
+    await push([...fresh, ...commands], "Import saved commands", {
+      success: `Imported ${fresh.length}`,
+    });
   } catch {
     showStatus("Import needs a JSON list of commands.", true);
   }
 });
 
+tokenForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const token = tokenInput.value.trim();
+  if (!token) return;
+  tokenSave.disabled = true;
+  try {
+    const check = await tokenCanWrite(token);
+    if (!check.ok) {
+      showStatus(check.reason, true);
+      return;
+    }
+    localStorage.setItem(TOKEN_KEY, token);
+    tokenInput.value = "";
+    updateTokenUI();
+    syncStatus.textContent = CONNECTED_TEXT;
+    showStatus("Token saved in this browser");
+    await refreshFromGitHub({ silent: true });
+  } catch {
+    showStatus("Could not reach GitHub.", true);
+  } finally {
+    tokenSave.disabled = false;
+  }
+});
+
+forgetTokenBtn.addEventListener("click", () => {
+  localStorage.removeItem(TOKEN_KEY);
+  updateTokenUI();
+  showStatus("Token removed from this browser");
+});
+
+refreshBtn.addEventListener("click", () => {
+  refreshFromGitHub();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") refreshFromGitHub({ silent: true });
+});
+
+updateTokenUI();
 render();
+refreshFromGitHub({ silent: true });
