@@ -139,6 +139,7 @@ h1 {
 .composer {
   margin: 4px 0 14px;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .composer summary {
@@ -178,7 +179,11 @@ h1 {
 
 .composer form {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) minmax(300px, 2fr) minmax(160px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "name note"
+    "command command"
+    "save save";
   gap: 10px;
   align-items: end;
   padding: 2px 16px 16px;
@@ -186,10 +191,36 @@ h1 {
 
 .composer .field {
   margin: 0;
+  min-width: 0;
+}
+
+.composer input,
+.composer textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.composer .name-field {
+  grid-area: name;
+}
+
+.composer .note-field {
+  grid-area: note;
+}
+
+.composer .command-field {
+  grid-area: command;
+  margin: 0;
 }
 
 .composer .form-row {
+  grid-area: save;
   margin: 0;
+}
+
+.composer textarea,
+.edit-form textarea {
+  min-height: 140px;
 }
 
 .composer .btn {
@@ -658,6 +689,11 @@ html:not([data-gate="open"]) .status {
 
   .composer form {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "name"
+      "command"
+      "note"
+      "save";
     padding: 2px 14px 14px;
   }
 

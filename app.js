@@ -260,7 +260,7 @@ function labeledInput(label, type, value) {
   const control = document.createElement(type === "textarea" ? "textarea" : "input");
   if (type !== "textarea") control.type = type;
   control.value = value;
-  if (type === "textarea") { control.rows = 4; control.spellcheck = false; }
+  if (type === "textarea") { control.rows = 6; control.spellcheck = false; field.classList.add("command-field"); }
   field.append(span, control);
   return field;
 }

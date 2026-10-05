@@ -9,7 +9,7 @@
       content="Save terminal commands and copy them to the clipboard in one click."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="stylesheet" href="styles.css?v=10" />
   </head>
   <body>
     <div class="page" inert>
@@ -46,7 +46,7 @@
               <span class="composer-summary-hint">Keep the list in view</span>
             </summary>
             <form id="add-form">
-              <label class="field">
+              <label class="field name-field">
                 <span>Name</span>
                 <input
                   id="name-input"
@@ -57,18 +57,18 @@
                   autocomplete="off"
                 />
               </label>
-              <label class="field">
+              <label class="field command-field">
                 <span>Command</span>
                 <textarea
                   id="command-input"
                   name="command"
-                  rows="3"
+                  rows="6"
                   required
                   spellcheck="false"
                   placeholder="docker compose down &amp;&amp; docker compose up -d"
                 ></textarea>
               </label>
-              <label class="field">
+              <label class="field note-field">
                 <span>Note <em>optional</em></span>
                 <input
                   id="note-input"
@@ -172,6 +172,6 @@
     <script src="config.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="gate.js?v=4"></script>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=10"></script>
   </body>
 </html>
