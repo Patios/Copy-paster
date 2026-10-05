@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Copy Paster</title>
+    <meta
+      name="description"
+      content="Save terminal commands and copy them to the clipboard in one click."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead">
+        <div class="brand">
+          <span class="mark" aria-hidden="true">&gt;_</span>
+          <div>
+            <h1>Copy Paster</h1>
+            <p>Save a terminal command, then copy it whenever you need it.</p>
+          </div>
+        </div>
+        <div class="mast-actions">
+          <button type="button" class="btn ghost" id="export-btn">Export</button>
+          <label class="btn ghost file-btn">
+            Import
+            <input type="file" id="import-input" accept="application/json,.json" hidden />
+          </label>
+        </div>
+      </header>
+
+      <section class="panel composer" aria-labelledby="composer-title">
+        <h2 id="composer-title">Save a command</h2>
+        <form id="add-form">
+          <label class="field">
+            <span>Name</span>
+            <input
+              id="name-input"
+              name="name"
+              type="text"
+              maxlength="80"
+              placeholder="Restart the stack"
+              autocomplete="off"
+            />
+          </label>
+          <label class="field">
+            <span>Command</span>
+            <textarea
+              id="command-input"
+              name="command"
+              rows="4"
+              required
+              spellcheck="false"
+              placeholder="docker compose down &amp;&amp; docker compose up -d"
+            ></textarea>
+          </label>
+          <label class="field">
+            <span>Note <em>optional</em></span>
+            <input
+              id="note-input"
+              name="note"
+              type="text"
+              maxlength="160"
+              placeholder="Run from the project root"
+              autocomplete="off"
+            />
+          </label>
+          <div class="form-row">
+            <button type="submit" class="btn primary">Save command</button>
+            <p class="hint">Commands stay in this browser. Export a file if you want a backup.</p>
+          </div>
+        </form>
+      </section>
+
+      <div class="toolbar">
+        <label class="search">
+          <span class="sr-only">Search commands</span>
+          <input id="search-input" type="search" placeholder="Search name, command, or note" />
+        </label>
+        <p id="count" class="count" aria-live="polite"></p>
+      </div>
+
+      <section aria-labelledby="list-title">
+        <h2 id="list-title" class="sr-only">Saved commands</h2>
+        <ul id="command-list" class="list"></ul>
+        <p id="empty" class="empty" hidden></p>
+      </section>
+    </div>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
