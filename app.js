@@ -86,7 +86,7 @@ function showStatus(message, isError = false) {
   statusEl.classList.toggle("error", isError);
   statusEl.classList.add("show");
   window.clearTimeout(statusTimer);
-  statusTimer = window.setTimeout(() => statusEl.classList.remove("show"), isError ? 4200 : 2200);
+  statusTimer = window.setTimeout(() => statusEl.classList.remove("show"), isError ? 7000 : 2200);
 }
 
 function updateAuthUI() {
@@ -364,7 +364,16 @@ resetPasswordBtn.addEventListener("click", async () => {
     redirectTo: `${location.origin}${location.pathname}`,
   });
   resetPasswordBtn.disabled = false;
-  if (error) { showStatus(error.message || "Could not send the reset email.", true); return; }
+  if (error) {
+    const limited = error.status === 429 || error.code === "over_email_send_rate_limit";
+    showStatus(
+      limited
+        ? "Supabase has paused outgoing email for a while. Open the confirmation or reset message already in your inbox, then try again later."
+        : error.message || "Could not send the reset email.",
+      true
+    );
+    return;
+  }
   showStatus("Check your email for a link to set a new password.");
 });
 
