@@ -9,7 +9,7 @@
       content="Save terminal commands and copy them to the clipboard in one click."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=4" />
+    <link rel="stylesheet" href="styles.css?v=7" />
   </head>
   <body>
     <div class="page" inert>
@@ -30,114 +30,117 @@
         </div>
       </header>
 
-      <section class="panel sync" id="sync-panel" aria-labelledby="sync-title">
-        <div class="sync-top">
-          <div>
-          <h2 id="sync-title">Synced across your computers</h2>
-            <p id="sync-status" class="hint">
-              Sign in with the same email and password on each computer.
-            </p>
+      <div class="workspace">
+        <div class="main-column">
+          <div class="toolbar">
+            <label class="search">
+              <span class="sr-only">Search commands</span>
+              <input id="search-input" type="search" placeholder="Search name, command, or note" />
+            </label>
+            <p id="count" class="count" aria-live="polite"></p>
           </div>
-          <button type="button" class="btn ghost" id="refresh-btn">Refresh</button>
+
+          <details class="panel composer" id="composer-panel">
+            <summary>
+              <span>+ Add a command</span>
+              <span class="composer-summary-hint">Keep the list in view</span>
+            </summary>
+            <form id="add-form">
+              <label class="field">
+                <span>Name</span>
+                <input
+                  id="name-input"
+                  name="name"
+                  type="text"
+                  maxlength="80"
+                  placeholder="Restart the stack"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="field">
+                <span>Command</span>
+                <textarea
+                  id="command-input"
+                  name="command"
+                  rows="3"
+                  required
+                  spellcheck="false"
+                  placeholder="docker compose down &amp;&amp; docker compose up -d"
+                ></textarea>
+              </label>
+              <label class="field">
+                <span>Note <em>optional</em></span>
+                <input
+                  id="note-input"
+                  name="note"
+                  type="text"
+                  maxlength="160"
+                  placeholder="Run from the project root"
+                  autocomplete="off"
+                />
+              </label>
+              <div class="form-row">
+                <button type="submit" class="btn primary">Save command</button>
+              </div>
+            </form>
+          </details>
+
+          <section class="command-area" aria-labelledby="list-title">
+            <div class="list-heading">
+              <h2 id="list-title">Your commands</h2>
+              <p class="hint">Copy, edit, or search your saved commands.</p>
+            </div>
+            <ul id="command-list" class="list"></ul>
+            <p id="empty" class="empty" hidden></p>
+          </section>
         </div>
-        <form id="auth-form" class="token-form">
-          <label class="field" id="email-field">
-            <span>Email address</span>
-            <input
-              id="email-input"
-              type="email"
-              autocomplete="username"
-              placeholder="you@example.com"
-              required
-            />
-          </label>
-          <label class="field" id="password-field">
-            <span>Password</span>
-            <input
-              id="password-input"
-              type="password"
-              autocomplete="current-password"
-              minlength="6"
-              required
-            />
-          </label>
-          <div class="form-row">
-            <button type="submit" class="btn primary" id="sign-in-btn">Sign in</button>
-            <button type="button" class="btn ghost" id="sign-up-btn">Create account</button>
-            <button type="button" class="btn ghost" id="reset-password-btn">Email a password reset</button>
-            <button type="button" class="btn ghost" id="sign-out-btn" hidden>Sign out</button>
-          </div>
-          <ol class="steps" id="auth-steps">
-            <li>Create the account once. Use at least 6 characters in the password.</li>
-            <li>Sign in with that same email and password on each computer.</li>
-          </ol>
-        </form>
-        <form id="new-password-form" class="token-form" hidden>
-          <label class="field">
-            <span>New password</span>
-            <input id="new-password-input" type="password" autocomplete="new-password" minlength="6" required />
-          </label>
-          <button type="submit" class="btn primary">Save new password</button>
-        </form>
-      </section>
 
-      <section class="panel composer" aria-labelledby="composer-title">
-        <h2 id="composer-title">Save a command</h2>
-        <form id="add-form">
-          <label class="field">
-            <span>Name</span>
-            <input
-              id="name-input"
-              name="name"
-              type="text"
-              maxlength="80"
-              placeholder="Restart the stack"
-              autocomplete="off"
-            />
-          </label>
-          <label class="field">
-            <span>Command</span>
-            <textarea
-              id="command-input"
-              name="command"
-              rows="4"
-              required
-              spellcheck="false"
-              placeholder="docker compose down &amp;&amp; docker compose up -d"
-            ></textarea>
-          </label>
-          <label class="field">
-            <span>Note <em>optional</em></span>
-            <input
-              id="note-input"
-              name="note"
-              type="text"
-              maxlength="160"
-              placeholder="Run from the project root"
-              autocomplete="off"
-            />
-          </label>
-          <div class="form-row">
-            <button type="submit" class="btn primary">Save command</button>
-            <p class="hint">Your command is saved privately to Supabase.</p>
+        <aside class="panel sync" id="sync-panel" aria-labelledby="sync-title">
+          <div class="sync-top">
+            <h2 id="sync-title">Sign in</h2>
+            <div class="sync-actions">
+              <button type="button" class="btn ghost" id="refresh-btn">Refresh</button>
+              <button type="button" class="btn ghost" id="sign-out-btn" hidden>Sign out</button>
+            </div>
           </div>
-        </form>
-      </section>
-
-      <div class="toolbar">
-        <label class="search">
-          <span class="sr-only">Search commands</span>
-          <input id="search-input" type="search" placeholder="Search name, command, or note" />
-        </label>
-        <p id="count" class="count" aria-live="polite"></p>
+          <p id="sync-status" class="hint">Sign in with the same email and password on each computer.</p>
+          <form id="auth-form" class="token-form">
+            <label class="field" id="email-field">
+              <span>Email</span>
+              <input
+                id="email-input"
+                type="email"
+                autocomplete="username"
+                placeholder="you@example.com"
+                required
+              />
+            </label>
+            <label class="field" id="password-field">
+              <span>Password</span>
+              <input
+                id="password-input"
+                type="password"
+                autocomplete="current-password"
+                minlength="6"
+                required
+              />
+            </label>
+            <div class="form-row">
+              <button type="submit" class="btn primary" id="sign-in-btn">Sign in</button>
+              <button type="button" class="btn ghost" id="sign-up-btn">Create account</button>
+              <button type="button" class="btn ghost" id="reset-password-btn">Reset password</button>
+            </div>
+            <p class="steps" id="auth-steps">Create the account once, then use it on each computer.</p>
+          </form>
+          <form id="new-password-form" class="token-form" hidden>
+            <label class="field">
+              <span>New password</span>
+              <input id="new-password-input" type="password" autocomplete="new-password" minlength="6" required />
+            </label>
+            <button type="submit" class="btn primary">Save new password</button>
+          </form>
+        </aside>
       </div>
-
-      <section aria-labelledby="list-title">
-        <h2 id="list-title" class="sr-only">Saved commands</h2>
-        <ul id="command-list" class="list"></ul>
-        <p id="empty" class="empty" hidden></p>
-      </section>
-    </div>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <div class="gate" id="gate">
@@ -168,6 +171,6 @@
     <script src="config.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="gate.js?v=4"></script>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>

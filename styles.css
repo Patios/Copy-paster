@@ -43,9 +43,20 @@ textarea {
 }
 
 .page {
-  width: min(820px, calc(100% - 32px));
+  width: min(1440px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 40px 0 80px;
+  padding: 20px 0 64px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(210px, 18vw, 270px);
+  gap: 20px;
+  align-items: start;
+}
+
+.main-column {
+  min-width: 0;
 }
 
 .masthead {
@@ -53,7 +64,7 @@ textarea {
   justify-content: space-between;
   gap: 20px;
   align-items: flex-start;
-  margin-bottom: 28px;
+  margin-bottom: 14px;
 }
 
 .brand {
@@ -82,7 +93,7 @@ p {
 }
 
 h1 {
-  font-size: 1.7rem;
+  font-size: 1.45rem;
   letter-spacing: -0.03em;
 }
 
@@ -120,7 +131,153 @@ h1 {
 }
 
 .sync {
-  margin-bottom: 16px;
+  position: sticky;
+  top: 16px;
+  padding: 14px;
+}
+
+.composer {
+  margin: 4px 0 14px;
+  overflow: hidden;
+}
+
+.composer summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 16px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.94rem;
+  font-weight: 650;
+  list-style: none;
+}
+
+.composer summary::-webkit-details-marker {
+  display: none;
+}
+
+.composer summary::before {
+  content: "›";
+  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 0.16s ease;
+}
+
+.composer summary > span:first-child {
+  margin-right: auto;
+}
+
+.composer[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.composer form {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(300px, 2fr) minmax(160px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 2px 16px 16px;
+}
+
+.composer .field {
+  margin: 0;
+}
+
+.composer .form-row {
+  margin: 0;
+}
+
+.composer .btn {
+  white-space: nowrap;
+}
+
+.composer-summary-hint {
+  color: var(--faint);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.sync h2 {
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.sync .sync-top {
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sync .sync-top .btn {
+  width: auto;
+  padding: 6px 10px;
+}
+
+.sync .token-form {
+  margin-top: 10px;
+}
+
+.sync .field {
+  margin-bottom: 8px;
+}
+
+.sync input {
+  padding: 8px 10px;
+}
+
+.sync .form-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sync .btn {
+  width: 100%;
+}
+
+.sync .steps {
+  margin-top: 10px;
+  font-size: 0.78rem;
+}
+
+.sync-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.sync.is-minimized {
+  padding: 10px 12px;
+}
+
+.sync.is-minimized .sync-top {
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 0;
+  gap: 8px;
+}
+
+.sync.is-minimized .sync-actions {
+  flex-direction: column;
+}
+
+.sync.is-minimized .sync-actions .btn {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.sync.is-minimized h2 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.workspace:has(.sync.is-minimized) {
+  grid-template-columns: minmax(0, 1fr) 180px;
 }
 
 .sync-top {
@@ -159,11 +316,6 @@ h1 {
   cursor: progress;
 }
 
-.composer h2 {
-  font-size: 0.95rem;
-  margin-bottom: 14px;
-}
-
 .field {
   display: grid;
   gap: 6px;
@@ -192,7 +344,7 @@ textarea {
 
 textarea {
   resize: vertical;
-  min-height: 96px;
+  min-height: 72px;
   font-family: var(--mono);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -255,7 +407,7 @@ textarea:focus,
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0 12px;
+  padding: 4px 0 8px;
   background: linear-gradient(var(--bg) 70%, transparent);
 }
 
@@ -273,14 +425,30 @@ textarea:focus,
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
+}
+
+.command-area {
+  min-height: calc(100vh - 166px);
+}
+
+.list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 2px 2px 10px;
+}
+
+.list-heading h2 {
+  font-size: 1rem;
 }
 
 .card {
   background: var(--bg-raise);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 14px 14px 12px;
+  padding: 14px 16px;
 }
 
 .card-top {
@@ -309,7 +477,7 @@ textarea:focus,
   border-radius: 10px;
   border: 1px solid #242932;
   font-family: var(--mono);
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
@@ -373,15 +541,18 @@ html[data-gate="open"] .gate {
   position: fixed;
   inset: 0;
   z-index: 20;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: rgba(18, 20, 23, 0.72);
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 24px;
+  background: transparent;
+  pointer-events: none;
 }
 
 .gate-dialog {
-  width: min(420px, 100%);
-  padding: 22px;
+  width: min(260px, calc(100% - 32px));
+  padding: 16px;
+  pointer-events: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--bg-raise);
@@ -470,9 +641,50 @@ html:not([data-gate="open"]) .status {
   .card-top,
   .form-row,
   .toolbar,
-  .sync-top {
+  .sync-top,
+  .workspace {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .workspace {
+    display: flex;
+  }
+
+  .page {
+    width: calc(100% - 24px);
+    padding-top: 14px;
+  }
+
+  .composer form {
+    grid-template-columns: 1fr;
+    padding: 2px 14px 14px;
+  }
+
+  .composer .form-row .btn {
+    width: 100%;
+  }
+
+  .composer-summary-hint {
+    display: none;
+  }
+
+  .command-area {
+    min-height: auto;
+  }
+
+  .list-heading {
+    align-items: flex-start;
+  }
+
+  .sync {
+    position: static;
+    order: 2;
+  }
+
+  .gate {
+    justify-content: center;
+    align-items: flex-end;
   }
 
   .mast-actions,

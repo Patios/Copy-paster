@@ -26,6 +26,7 @@ const newPasswordInput = document.querySelector("#new-password-input");
 const authSteps = document.querySelector("#auth-steps");
 const refreshBtn = document.querySelector("#refresh-btn");
 const saveButton = addForm.querySelector("button[type='submit']");
+const composerPanel = document.querySelector("#composer-panel");
 
 const url = window.COPY_PASTER_SUPABASE_URL;
 const publishableKey = window.COPY_PASTER_SUPABASE_PUBLISHABLE_KEY;
@@ -91,6 +92,14 @@ function showStatus(message, isError = false) {
 
 function updateAuthUI() {
   const signedIn = Boolean(currentUser);
+  const recovering = !newPasswordForm.hidden;
+  const minimized = signedIn && !recovering;
+  document.querySelector("#sync-panel").classList.toggle("is-minimized", minimized);
+  document.querySelector("#sync-title").textContent = signedIn
+    ? currentUser.email || "Signed in"
+    : "Sign in";
+  authForm.hidden = minimized;
+  syncStatus.hidden = minimized;
   emailField.hidden = signedIn;
   passwordField.hidden = signedIn;
   signInBtn.hidden = signedIn;
@@ -98,9 +107,11 @@ function updateAuthUI() {
   resetPasswordBtn.hidden = signedIn;
   authSteps.hidden = signedIn;
   signOutBtn.hidden = !signedIn;
-  syncStatus.textContent = signedIn
-    ? `Signed in as ${currentUser.email || "your account"}. Your commands are private and synced.`
-    : "Sign in with the same email and password on each computer.";
+  if (!minimized) {
+    syncStatus.textContent = signedIn
+      ? `Signed in as ${currentUser.email || "your account"}.`
+      : "Same email and password on each computer.";
+  }
 }
 
 function requireSignIn() {
@@ -289,7 +300,7 @@ addForm.addEventListener("submit", async (event) => {
   const saved = await saveCommand({ name: nameInput.value.trim(), command, note: noteInput.value.trim() });
   if (!saved) return;
   commands.unshift(saved);
-  persist(); addForm.reset(); query = ""; searchInput.value = ""; render(); nameInput.focus();
+  persist(); addForm.reset(); composerPanel.open = false; query = ""; searchInput.value = ""; render(); searchInput.focus();
   showStatus("Command saved");
 });
 
