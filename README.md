@@ -2,6 +2,10 @@
 
 Save terminal commands and copy them on any computer.
 
+## Usage
+
+This project is for personal, non-commercial use only. Commercial use is not permitted without permission from the project owner.
+
 Live page: https://patios.github.io/Copy-paster/
 
 The page stays locked until you enter the same password as the kids schedule page. It can be remembered on that device for 30 days.
@@ -19,3 +23,7 @@ Commands are stored privately in Supabase. Create an account once, then sign in 
 The old `commands.json` data is no longer used. Export it from the old page, then use **Import** after signing in to migrate it.
 
 Do not store passwords, API tokens, or other secrets in commands.
+
+## Releases
+
+The visible application version is defined in [`version.js`](version.js). Update it using semantic versioning (`major.minor.patch`) before a release, then create a matching Git tag, for example `v1.0.0`.

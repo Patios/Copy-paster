@@ -28,6 +28,9 @@ const authSteps = document.querySelector("#auth-steps");
 const refreshBtn = document.querySelector("#refresh-btn");
 const saveButton = addForm.querySelector("button[type='submit']");
 const composerPanel = document.querySelector("#composer-panel");
+const appVersion = document.querySelector("#app-version");
+
+if (appVersion) appVersion.textContent = `v${window.COPY_PASTER_VERSION || "dev"}`;
 
 const url = window.COPY_PASTER_SUPABASE_URL;
 const publishableKey = window.COPY_PASTER_SUPABASE_PUBLISHABLE_KEY;

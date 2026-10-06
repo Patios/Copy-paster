@@ -59,6 +59,17 @@ textarea {
   min-width: 0;
 }
 
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 2px 0;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+  font-size: 0.75rem;
+}
+
 .masthead {
   display: flex;
   justify-content: space-between;
@@ -830,6 +841,10 @@ html:not([data-gate="open"]) .status {
 
   .workspace {
     display: flex;
+  }
+
+  .app-footer {
+    margin-top: 16px;
   }
 
   .page {
