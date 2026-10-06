@@ -521,6 +521,30 @@ textarea:focus,
   color: var(--accent);
 }
 
+.tok-cmd {
+  color: #3ecf8e;
+}
+
+.tok-flag {
+  color: #79b8ff;
+}
+
+.tok-str {
+  color: #f0c36a;
+}
+
+.tok-op {
+  color: #ef6b5b;
+}
+
+.tok-var {
+  color: #d2a8ff;
+}
+
+.tok-comment {
+  color: var(--faint);
+}
+
 .edit-form .field:last-of-type {
   margin-bottom: 10px;
 }

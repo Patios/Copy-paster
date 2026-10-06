@@ -193,6 +193,90 @@ function render() {
   listEl.append(fragment);
 }
 
+function appendToken(parent, type, value) {
+  if (!value) return;
+  if (!type) {
+    parent.append(value);
+    return;
+  }
+  const span = document.createElement("span");
+  span.className = `tok tok-${type}`;
+  span.textContent = value;
+  parent.append(span);
+}
+
+function highlightCommand(parent, source) {
+  let index = 0;
+  let expectCommand = true;
+  while (index < source.length) {
+    const rest = source.slice(index);
+    if (rest[0] === "\n") {
+      parent.append("\n");
+      index += 1;
+      expectCommand = true;
+      continue;
+    }
+    const space = /^[^\S\n]+/.exec(rest);
+    if (space) {
+      parent.append(space[0]);
+      index += space[0].length;
+      continue;
+    }
+    if (rest[0] === "#") {
+      const comment = /^#[^\n]*/.exec(rest)[0];
+      appendToken(parent, "comment", comment);
+      index += comment.length;
+      continue;
+    }
+    if (rest[0] === "'" || rest[0] === "\"") {
+      const quote = rest[0];
+      let end = 1;
+      while (end < rest.length) {
+        if (quote === "\"" && rest[end] === "\\") end += 2;
+        else if (rest[end] === quote) { end += 1; break; }
+        else end += 1;
+      }
+      appendToken(parent, "str", rest.slice(0, end));
+      index += end;
+      expectCommand = false;
+      continue;
+    }
+    const operator = /^(?:&&|\|\||>>|<<|[|;&<>])/.exec(rest);
+    if (operator) {
+      appendToken(parent, "op", operator[0]);
+      index += operator[0].length;
+      expectCommand = true;
+      continue;
+    }
+    const variable = /^\$[A-Za-z_][\w]*|^\$\{[^}\n]*\}/.exec(rest);
+    if (variable) {
+      appendToken(parent, "var", variable[0]);
+      index += variable[0].length;
+      expectCommand = false;
+      continue;
+    }
+    if (expectCommand) {
+      const assignment = /^[A-Za-z_][\w]*=(?:"(?:\\.|[^"\\\n])*"|'[^'\n]*'|[^\s|&;<>]*)/.exec(rest);
+      if (assignment) {
+        appendToken(parent, "var", assignment[0]);
+        index += assignment[0].length;
+        continue;
+      }
+    }
+    const word = /^[^\s|&;<>]+/.exec(rest);
+    if (!word) {
+      parent.append(rest[0]);
+      index += 1;
+      continue;
+    }
+    if (expectCommand) appendToken(parent, "cmd", word[0]);
+    else if (word[0].startsWith("-")) appendToken(parent, "flag", word[0]);
+    else appendToken(parent, "arg", word[0]);
+    expectCommand = false;
+    index += word[0].length;
+  }
+}
+
 function renderCard(command) {
   const wrap = document.createElement("div");
   const top = document.createElement("div");
@@ -218,7 +302,7 @@ function renderCard(command) {
   const pre = document.createElement("pre");
   pre.className = "command";
   const code = document.createElement("code");
-  code.textContent = command.command;
+  highlightCommand(code, command.command);
   pre.append(code);
   wrap.append(top, pre);
   return wrap;
