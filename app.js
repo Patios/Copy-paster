@@ -646,6 +646,9 @@ document.addEventListener("click", (event) => {
   if (sharedEl.hidden || sharedEl.contains(event.target)) return;
   closeShared();
 });
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeShared();
+});
 
 sharedCopy.addEventListener("click", async () => {
   try {

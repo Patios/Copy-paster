@@ -118,6 +118,11 @@ h1 {
   flex-wrap: wrap;
 }
 
+.card-actions {
+  flex: none;
+  flex-wrap: nowrap;
+}
+
 .panel {
   background: rgba(27, 31, 38, 0.92);
   border: 1px solid var(--line);
@@ -532,7 +537,10 @@ textarea:focus,
 
 .card h3 {
   margin: 0;
+  min-width: 0;
+  flex: 1;
   font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .note {
@@ -544,7 +552,8 @@ textarea:focus,
   position: relative;
   margin: 12px 0 0;
   padding: 12px 12px 12px 2rem;
-  overflow-x: auto;
+  max-height: 16rem;
+  overflow: auto;
   background: var(--bg-code);
   border-radius: 10px;
   border: 1px solid #242932;
@@ -552,7 +561,7 @@ textarea:focus,
   font-size: 0.96rem;
   line-height: 1.55;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .command::before {
@@ -731,6 +740,10 @@ html:not([data-gate="open"]) .status {
   display: flex;
 }
 
+.shared[hidden] {
+  display: none;
+}
+
 .shared-card {
   display: flex;
   flex-direction: column;
@@ -747,6 +760,7 @@ html:not([data-gate="open"]) .status {
 
 .shared-top {
   display: flex;
+  flex: none;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
@@ -766,6 +780,11 @@ html:not([data-gate="open"]) .status {
   line-height: 1;
 }
 
+.shared-card h2,
+.shared-card .note {
+  flex: none;
+}
+
 .shared-card h2 {
   margin: 4px 0 0;
   max-height: 4.6em;
@@ -776,7 +795,7 @@ html:not([data-gate="open"]) .status {
 
 .shared-card .command {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 6rem;
   max-height: none;
   overflow: auto;
   overflow-wrap: anywhere;
