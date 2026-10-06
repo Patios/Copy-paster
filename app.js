@@ -427,14 +427,6 @@ async function onShare(command) {
     render();
   }
   const url = shareUrl(token);
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: commandLabel(command), url });
-      return;
-    } catch (error) {
-      if (error?.name === "AbortError") return;
-    }
-  }
   try {
     await copyText(url);
     showStatus("Share link copied");

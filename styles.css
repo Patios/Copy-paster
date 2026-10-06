@@ -540,7 +540,7 @@ textarea:focus,
   min-width: 0;
   flex: 1;
   font-size: 1rem;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .note {
@@ -741,7 +741,7 @@ html:not([data-gate="open"]) .status {
 }
 
 .shared[hidden] {
-  display: none;
+  display: none !important;
 }
 
 .shared-card {
