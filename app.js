@@ -454,6 +454,15 @@ async function onDelete(id) {
   persist(); render(); showStatus("Command deleted");
 }
 
+document.addEventListener("click", (event) => {
+  if (!pendingDeleteId) return;
+  const target = event.target instanceof Element ? event.target : event.target.parentElement;
+  const card = target?.closest(".card");
+  if (card?.dataset.id === pendingDeleteId) return;
+  pendingDeleteId = null;
+  render();
+});
+
 addForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const command = commandInput.value.trim();
