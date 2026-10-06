@@ -633,6 +633,20 @@ async function loadSharedCommand() {
   highlightCommand(sharedCommand, row.command);
 }
 
+function closeShared() {
+  if (sharedEl.hidden) return;
+  sharedEl.hidden = true;
+  const url = new URL(location.href);
+  url.searchParams.delete("share");
+  history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+document.querySelector("#shared-close").addEventListener("click", closeShared);
+document.addEventListener("click", (event) => {
+  if (sharedEl.hidden || sharedEl.contains(event.target)) return;
+  closeShared();
+});
+
 sharedCopy.addEventListener("click", async () => {
   try {
     await copyText(sharedText);
