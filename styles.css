@@ -443,7 +443,34 @@ textarea:focus,
 }
 
 .search {
+  position: relative;
   flex: 1;
+}
+
+.search input {
+  padding-right: 64px;
+}
+
+.search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  color: var(--text);
 }
 
 .count {

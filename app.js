@@ -5,6 +5,7 @@ const nameInput = document.querySelector("#name-input");
 const commandInput = document.querySelector("#command-input");
 const noteInput = document.querySelector("#note-input");
 const searchInput = document.querySelector("#search-input");
+const searchClear = document.querySelector("#search-clear");
 const listEl = document.querySelector("#command-list");
 const emptyEl = document.querySelector("#empty");
 const countEl = document.querySelector("#count");
@@ -173,7 +174,10 @@ function matches(command) {
 function render() {
   const visible = commands.filter(matches);
   listEl.replaceChildren();
-  countEl.textContent = commands.length === 1 ? "1 saved" : `${commands.length} saved`;
+  searchClear.hidden = !query;
+  countEl.textContent = query
+    ? `${visible.length} of ${commands.length}`
+    : commands.length === 1 ? "1 saved" : `${commands.length} saved`;
   if (!visible.length) {
     emptyEl.hidden = false;
     emptyEl.textContent = commands.length
@@ -388,7 +392,19 @@ addForm.addEventListener("submit", async (event) => {
   showStatus("Command saved");
 });
 
-searchInput.addEventListener("input", () => { query = searchInput.value.trim().toLowerCase(); pendingDeleteId = null; render(); });
+function applySearch() {
+  query = searchInput.value.trim().toLowerCase();
+  pendingDeleteId = null;
+  render();
+}
+
+searchInput.addEventListener("input", applySearch);
+searchInput.addEventListener("search", applySearch);
+searchClear.addEventListener("click", () => {
+  searchInput.value = "";
+  applySearch();
+  searchInput.focus();
+});
 
 exportBtn.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(commands, null, 2)], { type: "application/json" });

@@ -9,7 +9,7 @@
       content="Save terminal commands and copy them to the clipboard in one click."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=11" />
+    <link rel="stylesheet" href="styles.css?v=12" />
   </head>
   <body>
     <div class="page" inert>
@@ -34,8 +34,9 @@
         <div class="main-column">
           <div class="toolbar">
             <label class="search">
-              <span class="sr-only">Search commands</span>
-              <input id="search-input" type="search" placeholder="Search name, command, or note" />
+              <span class="sr-only">Filter commands</span>
+              <input id="search-input" type="search" placeholder="Filter commands" autocomplete="off" />
+              <button type="button" class="search-clear" id="search-clear" hidden>Clear</button>
             </label>
             <p id="count" class="count" aria-live="polite"></p>
           </div>
@@ -172,6 +173,6 @@
     <script src="config.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="gate.js?v=4"></script>
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>
