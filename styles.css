@@ -727,10 +727,18 @@ html:not([data-gate="open"]) .status {
   top: 16px;
   left: 16px;
   width: min(560px, calc(100% - 320px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
 }
 
 .shared-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  min-height: 0;
   padding: 16px;
+  overflow: hidden;
   background: var(--bg-raise);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -760,10 +768,22 @@ html:not([data-gate="open"]) .status {
 
 .shared-card h2 {
   margin: 4px 0 0;
+  max-height: 4.6em;
+  overflow: auto;
   font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+.shared-card .command {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  overflow-wrap: anywhere;
 }
 
 .shared-card .btn {
+  flex: none;
   margin-top: 12px;
 }
 
