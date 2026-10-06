@@ -11,7 +11,7 @@ Commands are stored privately in Supabase. Create an account once, then sign in 
 ## One-time Supabase setup
 
 1. Open Supabase Dashboard → **SQL Editor** → **New query**.
-2. Copy and run all of [`supabase.sql`](supabase.sql). It creates the table and Row Level Security policies that ensure each signed-in user can only access their own commands.
+2. Copy and run all of [`supabase.sql`](supabase.sql). It creates the table and Row Level Security policies that ensure each signed-in user can only access their own commands. To share one command by link, also run [`share.sql`](share.sql) once. That adds a token and a function which returns only the shared command.
 3. Open **Authentication** → **URL Configuration** and set the Site URL to `https://patios.github.io/Copy-paster/`. Add that same URL to Redirect URLs.
 4. Under **Authentication** → **Providers** → **Email**, keep Email enabled. Turn off **Confirm email** if you want to create the account without an inbox message.
 5. Deploy these files to GitHub Pages, create the account once, then sign in with the same email and password on each computer.

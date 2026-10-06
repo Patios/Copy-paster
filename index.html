@@ -9,7 +9,7 @@
       content="Save terminal commands and copy them to the clipboard in one click."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=12" />
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body>
     <div class="page" inert>
@@ -145,6 +145,15 @@
     </div>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
+    <section id="shared" class="shared" hidden>
+      <div class="shared-card">
+        <p class="shared-label">Shared command</p>
+        <h2 id="shared-name"></h2>
+        <p id="shared-note" class="note" hidden></p>
+        <pre class="command"><code id="shared-command"></code></pre>
+        <button type="button" class="btn primary" id="shared-copy">Copy</button>
+      </div>
+    </section>
     <div class="gate" id="gate">
       <form id="gate-form" class="gate-dialog">
         <h2>Enter the password</h2>
@@ -173,6 +182,6 @@
     <script src="config.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="gate.js?v=4"></script>
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=15"></script>
   </body>
 </html>

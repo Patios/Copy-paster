@@ -417,6 +417,20 @@ textarea:focus,
   background: var(--bg-raise);
 }
 
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 .btn.danger {
   color: var(--danger);
 }
@@ -707,6 +721,37 @@ html:not([data-gate="open"]) .status {
   display: none;
 }
 
+.shared {
+  position: fixed;
+  z-index: 30;
+  top: 16px;
+  left: 16px;
+  width: min(560px, calc(100% - 320px));
+}
+
+.shared-card {
+  padding: 16px;
+  background: var(--bg-raise);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.shared-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.shared-card h2 {
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+}
+
+.shared-card .btn {
+  margin-top: 12px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -784,5 +829,13 @@ html:not([data-gate="open"]) .status {
   .file-btn {
     flex: 1;
     text-align: center;
+  }
+
+  .card-actions .icon-btn {
+    flex: 0 0 auto;
+  }
+
+  .shared {
+    width: calc(100% - 32px);
   }
 }

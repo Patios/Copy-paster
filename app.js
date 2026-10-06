@@ -39,6 +39,7 @@ const db = url && publishableKey && window.supabase
 
 let commands = loadCache();
 let currentUser = null;
+let shareReady = true;
 let query = "";
 let editingId = null;
 let pendingDeleteId = null;
@@ -68,6 +69,7 @@ function normalize(items) {
     name: typeof item.name === "string" ? item.name : "",
     command: item.command,
     note: typeof item.note === "string" ? item.note : "",
+    shareToken: typeof item.shareToken === "string" ? item.shareToken : typeof item.share_token === "string" ? item.share_token : "",
     updatedAt: typeof item.updatedAt === "number"
       ? item.updatedAt
       : Date.parse(item.updated_at || "") || Date.now(),
@@ -133,10 +135,12 @@ async function refreshCommands({ silent = false } = {}) {
   }
 
   syncStatus.textContent = "Loading your commands…";
-  const { data, error } = await db
-    .from("commands")
-    .select("id, name, command, note, updated_at")
-    .order("updated_at", { ascending: false });
+  const columns = shareReady ? "id, name, command, note, share_token, updated_at" : "id, name, command, note, updated_at";
+  const { data, error } = await db.from("commands").select(columns).order("updated_at", { ascending: false });
+  if (error && shareReady && /share_token/.test(error.message || "")) {
+    shareReady = false;
+    return refreshCommands({ silent });
+  }
   if (error) {
     updateAuthUI();
     showStatus("Could not load commands. Complete the Supabase setup in README.", true);
@@ -154,8 +158,9 @@ async function saveCommand(values, id) {
   saving = true;
   saveButton.disabled = true;
   try {
+    const columns = shareReady ? "id, name, command, note, share_token, updated_at" : "id, name, command, note, updated_at";
     const request = id ? db.from("commands").update(values).eq("id", id) : db.from("commands").insert(values);
-    const { data, error } = await request.select("id, name, command, note, updated_at").single();
+    const { data, error } = await request.select(columns).single();
     if (error) throw error;
     return toCommand(data);
   } catch {
@@ -299,6 +304,7 @@ function renderCard(command) {
   actions.className = "card-actions";
   actions.append(
     button("Copy", "primary", () => onCopy(command)),
+    shareButton(() => onShare(command)),
     button("Edit", "ghost", () => { editingId = command.id; pendingDeleteId = null; render(); }),
     button(pendingDeleteId === command.id ? "Confirm delete" : "Delete", pendingDeleteId === command.id ? "confirm" : "danger", () => onDelete(command.id))
   );
@@ -353,6 +359,28 @@ function labeledInput(label, type, value) {
   return field;
 }
 
+function shareButton(onClick) {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.className = "btn ghost icon-btn";
+  el.setAttribute("aria-label", "Share");
+  el.title = "Share link";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "currentColor");
+  path.setAttribute("stroke-width", "1.8");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("d", "M14 4h6v6M20 4 11 13M16 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h6");
+  svg.append(path);
+  el.append(svg);
+  el.addEventListener("click", onClick);
+  return el;
+}
+
 function button(label, variant, onClick) {
   const el = document.createElement("button");
   el.type = "button";
@@ -360,6 +388,55 @@ function button(label, variant, onClick) {
   el.textContent = label;
   if (onClick) el.addEventListener("click", onClick);
   return el;
+}
+
+function shareUrl(token) {
+  const url = new URL(location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("share", token);
+  return url.toString();
+}
+
+async function copyText(value) {
+  await navigator.clipboard.writeText(value);
+}
+
+async function onShare(command) {
+  if (!requireSignIn() || !db) return;
+  if (!shareReady) {
+    showStatus("Run share.sql once in the Supabase SQL editor, then try sharing again.", true);
+    return;
+  }
+  let token = command.shareToken;
+  if (!token) {
+    token = crypto.randomUUID();
+    const { data, error } = await db.from("commands").update({ share_token: token }).eq("id", command.id).select("share_token").single();
+    if (error || !data?.share_token) {
+      shareReady = false;
+      showStatus("Run share.sql once in the Supabase SQL editor, then try sharing again.", true);
+      return;
+    }
+    token = data.share_token;
+    commands = commands.map((item) => item.id === command.id ? { ...item, shareToken: token } : item);
+    persist();
+    render();
+  }
+  const url = shareUrl(token);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: command.name || "Command", url });
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  try {
+    await copyText(url);
+    showStatus("Share link copied");
+  } catch {
+    showStatus("Could not copy the link.", true);
+  }
 }
 
 async function onCopy(command) {
@@ -522,3 +599,43 @@ async function initialise() {
 
 if (document.documentElement.dataset.gate === "open") initialise();
 else document.addEventListener("copy-paster-open", initialise, { once: true });
+
+const sharedEl = document.querySelector("#shared");
+const sharedName = document.querySelector("#shared-name");
+const sharedNote = document.querySelector("#shared-note");
+const sharedCommand = document.querySelector("#shared-command");
+const sharedCopy = document.querySelector("#shared-copy");
+let sharedText = "";
+
+async function loadSharedCommand() {
+  const token = new URLSearchParams(location.search).get("share");
+  if (!db || !token || !/^[0-9a-f-]{36}$/i.test(token)) return;
+  const { data, error } = await db.rpc("get_shared_command", { token });
+  const row = Array.isArray(data) ? data[0] : data;
+  sharedEl.hidden = false;
+  if (error || !row || typeof row.command !== "string") {
+    sharedName.textContent = "This link is not available";
+    sharedNote.hidden = true;
+    sharedCommand.parentElement.hidden = true;
+    sharedCopy.hidden = true;
+    return;
+  }
+  sharedText = row.command;
+  sharedName.textContent = row.name || titleFromCommand(row.command);
+  sharedNote.hidden = !row.note;
+  sharedNote.textContent = row.note || "";
+  sharedCommand.parentElement.hidden = false;
+  sharedCopy.hidden = false;
+  highlightCommand(sharedCommand, row.command);
+}
+
+sharedCopy.addEventListener("click", async () => {
+  try {
+    await copyText(sharedText);
+    showStatus("Copied to clipboard");
+  } catch {
+    showStatus("Could not copy. Select the command and copy it manually.", true);
+  }
+});
+
+loadSharedCommand();
