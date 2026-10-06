@@ -85,6 +85,10 @@ function titleFromCommand(command) {
   return line.trim().slice(0, 80);
 }
 
+function commandLabel(command) {
+  return command.name || titleFromCommand(command.command);
+}
+
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("error", isError);
@@ -292,7 +296,7 @@ function renderCard(command) {
   top.className = "card-top";
   const meta = document.createElement("div");
   const title = document.createElement("h3");
-  title.textContent = command.name || titleFromCommand(command.command);
+  title.textContent = commandLabel(command);
   meta.append(title);
   if (command.note) {
     const note = document.createElement("p");
@@ -425,7 +429,7 @@ async function onShare(command) {
   const url = shareUrl(token);
   if (navigator.share) {
     try {
-      await navigator.share({ title: command.name || "Command", url });
+      await navigator.share({ title: commandLabel(command), url });
       return;
     } catch (error) {
       if (error?.name === "AbortError") return;
